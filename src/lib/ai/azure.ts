@@ -2,8 +2,23 @@ import { createAzure } from "@ai-sdk/azure";
 import { createOpenAI } from "@ai-sdk/openai";
 
 // ─── Configuration ──────────────────────────────────────────────────────────
-const rawEndpoint = process.env.AZURE_OPENAI_ENDPOINT?.trim();
-const apiKey = process.env.AZURE_OPENAI_API_KEY?.trim();
+//
+// Sanitize env var values: trim whitespace, strip surrounding quotes, and
+// unwrap markdown link syntax that sometimes sneaks in when pasting from a
+// chat client ("[text](url)" → "url").
+function clean(v: string | undefined): string | undefined {
+  if (!v) return undefined;
+  let s = v.trim();
+  // Strip surrounding quotes
+  s = s.replace(/^['"]|['"]$/g, "");
+  // Strip markdown link wrapper: [foo](url)  →  url
+  const md = s.match(/^\[[^\]]*\]\((.+)\)$/);
+  if (md) s = md[1].trim();
+  return s.replace(/^['"]|['"]$/g, "") || undefined;
+}
+
+const rawEndpoint = clean(process.env.AZURE_OPENAI_ENDPOINT);
+const apiKey = clean(process.env.AZURE_OPENAI_API_KEY);
 // Different endpoint shapes accept different api-version values:
 //   - Foundry agents + classic /openai/v1   → literal "preview" or "v1"
 //   - Classic deployment-based              → a date like "2024-10-21"
