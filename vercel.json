@@ -1,0 +1,14 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "buildCommand": "pnpm build",
+  "installCommand": "pnpm install --frozen-lockfile",
+  "regions": ["iad1"],
+  "functions": {
+    "src/app/api/agent/route.ts": { "maxDuration": 120 },
+    "src/app/api/chat/route.ts": { "maxDuration": 60 },
+    "src/app/api/generate/text/route.ts": { "maxDuration": 60 },
+    "src/app/api/generate/image/route.ts": { "maxDuration": 60 },
+    "src/app/api/analyze/image/route.ts": { "maxDuration": 60 }
+  }
+}
