@@ -2,7 +2,12 @@ import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getSession } from "@/lib/auth";
-import { isAzureConfigured, deployments } from "@/lib/ai/azure";
+import {
+  isAzureConfigured,
+  isImageConfigured,
+  isEmbeddingConfigured,
+  deployments,
+} from "@/lib/ai/azure";
 import { SettingsClient } from "./settings-client";
 
 export const metadata = { title: "Settings" };
@@ -37,14 +42,67 @@ export default async function SettingsPage() {
                 )
               }
             />
-            <Row k="Primary" v={<code className="text-xs">{deployments.primary}</code>} />
-            <Row k="Pro" v={<code className="text-xs">{deployments.pro}</code>} />
-            <Row k="Reasoning" v={<code className="text-xs">{deployments.reasoning}</code>} />
-            <Row k="Embedding" v={<code className="text-xs">{deployments.embedding}</code>} />
-            <Row k="Image" v={<code className="text-xs">{deployments.image}</code>} />
+            <Row
+              k="Primary (LLM)"
+              v={
+                <span className="flex items-center gap-2">
+                  <Badge variant="default">required</Badge>
+                  <code className="text-xs">{deployments.primary}</code>
+                </span>
+              }
+            />
+            <Row
+              k="Pro"
+              v={
+                <span className="flex items-center gap-2">
+                  {process.env.AZURE_DEPLOYMENT_PRO ? (
+                    <Badge variant="success">set</Badge>
+                  ) : (
+                    <Badge variant="outline">→ primary</Badge>
+                  )}
+                  <code className="text-xs">{deployments.pro}</code>
+                </span>
+              }
+            />
+            <Row
+              k="Reasoning"
+              v={
+                <span className="flex items-center gap-2">
+                  {process.env.AZURE_DEPLOYMENT_REASONING ? (
+                    <Badge variant="success">set</Badge>
+                  ) : (
+                    <Badge variant="outline">→ primary</Badge>
+                  )}
+                  <code className="text-xs">{deployments.reasoning}</code>
+                </span>
+              }
+            />
+            <Row
+              k="Embedding"
+              v={
+                isEmbeddingConfigured ? (
+                  <code className="text-xs">{deployments.embedding}</code>
+                ) : (
+                  <Badge variant="outline">optional · not set</Badge>
+                )
+              }
+            />
+            <Row
+              k="Image"
+              v={
+                isImageConfigured ? (
+                  <code className="text-xs">{deployments.image}</code>
+                ) : (
+                  <Badge variant="outline">optional · not set</Badge>
+                )
+              }
+            />
             <p className="border-t border-border pt-3 text-xs text-muted-foreground">
-              Configure via env vars: <code>AZURE_OPENAI_ENDPOINT</code>,{" "}
-              <code>AZURE_OPENAI_API_KEY</code>. Defaults assume gpt-5-mini / gpt-5 / o4-mini.
+              Only <code>AZURE_OPENAI_ENDPOINT</code>, <code>AZURE_OPENAI_API_KEY</code>,
+              and <code>AZURE_DEPLOYMENT_PRIMARY</code> are required. A single
+              gpt-5-nano deployment is a valid full setup. Image generation and
+              embeddings are different model classes — set their dedicated
+              deployment vars to enable those features.
             </p>
           </CardContent>
         </Card>

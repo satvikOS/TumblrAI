@@ -24,13 +24,27 @@ export const azure = isAzureConfigured
     })
   : null;
 
+// Deployment routing.
+//
+// Only AZURE_DEPLOYMENT_PRIMARY is required. The "pro" and "reasoning" tiers
+// transparently fall back to the primary deployment when their dedicated
+// envs are unset — so a single gpt-5-nano deployment is a valid full setup.
+//
+// Image generation and embeddings live on different model classes; if those
+// deployments are absent the matching endpoints return a clearly-labeled
+// preview response instead of failing.
+const primary = process.env.AZURE_DEPLOYMENT_PRIMARY ?? "gpt-5-nano";
+
 export const deployments = {
-  primary: process.env.AZURE_DEPLOYMENT_PRIMARY ?? "gpt-5-mini",
-  pro: process.env.AZURE_DEPLOYMENT_PRO ?? "gpt-5",
-  reasoning: process.env.AZURE_DEPLOYMENT_REASONING ?? "o4-mini",
-  embedding: process.env.AZURE_DEPLOYMENT_EMBEDDING ?? "text-embedding-3-large",
-  image: process.env.AZURE_DEPLOYMENT_IMAGE ?? "gpt-image-1",
+  primary,
+  pro: process.env.AZURE_DEPLOYMENT_PRO ?? primary,
+  reasoning: process.env.AZURE_DEPLOYMENT_REASONING ?? primary,
+  embedding: process.env.AZURE_DEPLOYMENT_EMBEDDING ?? "",
+  image: process.env.AZURE_DEPLOYMENT_IMAGE ?? "",
 } as const;
+
+export const isImageConfigured = Boolean(deployments.image);
+export const isEmbeddingConfigured = Boolean(deployments.embedding);
 
 export const azureRest = {
   endpoint: endpoint?.replace(/\/$/, ""),

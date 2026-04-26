@@ -1,7 +1,7 @@
-import { azureRest, deployments, isAzureConfigured } from "./azure";
+import { azureRest, deployments, isAzureConfigured, isEmbeddingConfigured } from "./azure";
 
 export async function embed(input: string | string[]): Promise<number[][]> {
-  if (!isAzureConfigured || !azureRest.endpoint) {
+  if (!isAzureConfigured || !isEmbeddingConfigured || !azureRest.endpoint) {
     return Array.isArray(input) ? input.map(() => []) : [[]];
   }
   const inputs = Array.isArray(input) ? input : [input];

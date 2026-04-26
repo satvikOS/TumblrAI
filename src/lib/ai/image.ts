@@ -1,4 +1,4 @@
-import { azureRest, deployments, isAzureConfigured } from "./azure";
+import { azureRest, deployments, isAzureConfigured, isImageConfigured } from "./azure";
 
 export type ImageGenInput = {
   prompt: string;
@@ -12,7 +12,7 @@ export type ImageGenOutput = {
 };
 
 export async function generateImage(input: ImageGenInput): Promise<ImageGenOutput> {
-  if (!isAzureConfigured || !azureRest.endpoint) {
+  if (!isAzureConfigured || !isImageConfigured || !azureRest.endpoint) {
     return { images: [] };
   }
 
