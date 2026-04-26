@@ -3,22 +3,51 @@ import { createOpenAI } from "@ai-sdk/openai";
 
 // ─── Configuration ──────────────────────────────────────────────────────────
 //
-// Sanitize env var values: trim whitespace, strip surrounding quotes, and
-// unwrap markdown link syntax that sometimes sneaks in when pasting from a
-// chat client ("[text](url)" → "url").
-function clean(v: string | undefined): string | undefined {
+// Aggressively sanitize env var values. We've seen these in the wild:
+//   "[host.com](http://host.com)"        — markdown link from chat clients
+//   "\"https://host.com\""                — quoted by accident in dashboards
+//   "https://host.com /openai/v1"          — stray whitespace in middle
+//   "https://host.com?utm=..."             — extra query params from auto-redirect
+//
+// Strategy: regex-extract the first https?:// URL anywhere in the string.
+// If no URL is found, fall back to the trimmed/unquoted value.
+function cleanEndpoint(v: string | undefined): string | undefined {
   if (!v) return undefined;
-  let s = v.trim();
-  // Strip surrounding quotes
-  s = s.replace(/^['"]|['"]$/g, "");
-  // Strip markdown link wrapper: [foo](url)  →  url
-  const md = s.match(/^\[[^\]]*\]\((.+)\)$/);
-  if (md) s = md[1].trim();
-  return s.replace(/^['"]|['"]$/g, "") || undefined;
+  const trimmed = v.trim().replace(/^['"]+|['"]+$/g, "");
+  const urlMatch = trimmed.match(/https?:\/\/[^\s)\]"'<>]+/);
+  if (urlMatch) {
+    let url = urlMatch[0]
+      .replace(/[)\].,;]+$/, "") // strip trailing punctuation
+      .replace(/\/+$/, ""); // strip trailing slash
+    // Azure OpenAI / Foundry endpoints are always HTTPS — auto-upgrade
+    // anything that came in as http:// (which is common when chat clients
+    // turn URLs into markdown links with http:// inside).
+    url = url.replace(/^http:\/\//, "https://");
+    return url;
+  }
+  return trimmed || undefined;
 }
 
-const rawEndpoint = clean(process.env.AZURE_OPENAI_ENDPOINT);
-const apiKey = clean(process.env.AZURE_OPENAI_API_KEY);
+function cleanKey(v: string | undefined): string | undefined {
+  if (!v) return undefined;
+  return v.trim().replace(/^['"]+|['"]+$/g, "") || undefined;
+}
+
+const rawEndpoint = cleanEndpoint(process.env.AZURE_OPENAI_ENDPOINT);
+const apiKey = cleanKey(process.env.AZURE_OPENAI_API_KEY);
+
+// Hard validation: an endpoint that doesn't parse as a URL is a hard error.
+// This stops us from ever sending fetch a malformed hostname.
+if (rawEndpoint) {
+  try {
+    new URL(rawEndpoint);
+  } catch {
+    throw new Error(
+      `AZURE_OPENAI_ENDPOINT is not a valid URL: "${rawEndpoint}". ` +
+        `Expected format: https://your-resource.openai.azure.com`,
+    );
+  }
+}
 // Different endpoint shapes accept different api-version values:
 //   - Foundry agents + classic /openai/v1   → literal "preview" or "v1"
 //   - Classic deployment-based              → a date like "2024-10-21"
