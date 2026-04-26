@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Toaster } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ThemeProvider } from "@/components/theme-provider";
+import { ThemedToaster } from "@/components/themed-toaster";
 
 export const metadata: Metadata = {
   title: {
@@ -17,10 +18,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="min-h-svh antialiased scrollbar-thin">
-        <TooltipProvider delayDuration={200}>
-          {children}
-          <Toaster position="top-right" richColors closeButton />
-        </TooltipProvider>
+        <ThemeProvider>
+          <TooltipProvider delayDuration={200}>
+            {children}
+            <ThemedToaster />
+          </TooltipProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

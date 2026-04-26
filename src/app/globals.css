@@ -10,66 +10,67 @@
   --font-mono:
     "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
     monospace;
-
-  --color-bg: oklch(0.99 0 0);
-  --color-fg: oklch(0.18 0.01 270);
-  --color-muted: oklch(0.96 0.005 270);
-  --color-muted-fg: oklch(0.5 0.01 270);
-  --color-border: oklch(0.92 0.005 270);
-  --color-card: oklch(1 0 0);
-  --color-accent: oklch(0.62 0.22 295);
-  --color-accent-fg: oklch(0.99 0 0);
-  --color-success: oklch(0.7 0.16 145);
-  --color-warn: oklch(0.78 0.16 75);
-  --color-danger: oklch(0.62 0.22 25);
   --radius: 0.7rem;
 }
 
+/* Light theme — soft warm white, deep ink, vivid violet accent. */
 :root {
-  --background: var(--color-bg);
-  --foreground: var(--color-fg);
-  --card: var(--color-card);
-  --card-foreground: var(--color-fg);
-  --popover: var(--color-card);
-  --popover-foreground: var(--color-fg);
-  --primary: var(--color-accent);
-  --primary-foreground: var(--color-accent-fg);
-  --secondary: var(--color-muted);
-  --secondary-foreground: var(--color-fg);
-  --muted: var(--color-muted);
-  --muted-foreground: var(--color-muted-fg);
-  --accent: var(--color-muted);
-  --accent-foreground: var(--color-fg);
-  --destructive: var(--color-danger);
+  --background: oklch(0.99 0 0);
+  --foreground: oklch(0.18 0.01 270);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.18 0.01 270);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.18 0.01 270);
+  --primary: oklch(0.58 0.22 295);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.96 0.005 270);
+  --secondary-foreground: oklch(0.18 0.01 270);
+  --muted: oklch(0.96 0.005 270);
+  --muted-foreground: oklch(0.42 0.012 270);
+  --accent: oklch(0.96 0.005 270);
+  --accent-foreground: oklch(0.18 0.01 270);
+  --destructive: oklch(0.62 0.22 25);
   --destructive-foreground: oklch(0.99 0 0);
-  --border: var(--color-border);
-  --input: var(--color-border);
-  --ring: var(--color-accent);
+  --border: oklch(0.91 0.005 270);
+  --input: oklch(0.91 0.005 270);
+  --ring: oklch(0.58 0.22 295);
+
+  /* Status colors that follow the theme. */
+  --success: oklch(0.62 0.18 145);
+  --warn: oklch(0.7 0.18 75);
+  --danger: oklch(0.6 0.22 25);
+
   --radius: 0.7rem;
 }
 
+/* Dark theme — deep desaturated indigo, bright violet accent, lifted text. */
 .dark {
-  --background: oklch(0.16 0.01 270);
-  --foreground: oklch(0.97 0 0);
-  --card: oklch(0.2 0.012 270);
-  --card-foreground: oklch(0.97 0 0);
-  --popover: oklch(0.2 0.012 270);
-  --popover-foreground: oklch(0.97 0 0);
-  --primary: oklch(0.72 0.2 295);
-  --primary-foreground: oklch(0.16 0.01 270);
-  --secondary: oklch(0.24 0.012 270);
-  --secondary-foreground: oklch(0.97 0 0);
-  --muted: oklch(0.24 0.012 270);
-  --muted-foreground: oklch(0.7 0.01 270);
-  --accent: oklch(0.24 0.012 270);
-  --accent-foreground: oklch(0.97 0 0);
-  --destructive: oklch(0.62 0.22 25);
-  --destructive-foreground: oklch(0.97 0 0);
-  --border: oklch(0.28 0.012 270);
-  --input: oklch(0.28 0.012 270);
-  --ring: oklch(0.72 0.2 295);
+  --background: oklch(0.16 0.012 270);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.21 0.014 270);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.21 0.014 270);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.78 0.18 295);
+  --primary-foreground: oklch(0.16 0.012 270);
+  --secondary: oklch(0.26 0.014 270);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.26 0.014 270);
+  --muted-foreground: oklch(0.78 0.012 270);
+  --accent: oklch(0.26 0.014 270);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.7 0.22 25);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(0.3 0.014 270);
+  --input: oklch(0.3 0.014 270);
+  --ring: oklch(0.78 0.18 295);
+
+  --success: oklch(0.78 0.18 150);
+  --warn: oklch(0.82 0.18 80);
+  --danger: oklch(0.72 0.22 25);
 }
 
+/* Map runtime CSS vars to Tailwind utilities (bg-background, text-foreground, etc.). */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -90,6 +91,9 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-success: var(--success);
+  --color-warn: var(--warn);
+  --color-danger: var(--danger);
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
@@ -114,10 +118,15 @@ body {
 
 .gradient-mesh {
   background:
-    radial-gradient(at 20% 10%, color-mix(in oklch, var(--primary) 30%, transparent) 0px, transparent 50%),
-    radial-gradient(at 80% 0%, color-mix(in oklch, var(--color-success) 25%, transparent) 0px, transparent 50%),
-    radial-gradient(at 0% 50%, color-mix(in oklch, var(--color-warn) 20%, transparent) 0px, transparent 50%),
-    radial-gradient(at 80% 80%, color-mix(in oklch, var(--primary) 25%, transparent) 0px, transparent 50%);
+    radial-gradient(at 20% 10%, color-mix(in oklch, var(--primary) 35%, transparent) 0px, transparent 55%),
+    radial-gradient(at 85% 5%, color-mix(in oklch, var(--success) 28%, transparent) 0px, transparent 55%),
+    radial-gradient(at 0% 60%, color-mix(in oklch, var(--warn) 22%, transparent) 0px, transparent 55%),
+    radial-gradient(at 80% 80%, color-mix(in oklch, var(--primary) 28%, transparent) 0px, transparent 55%);
+}
+
+.dark .gradient-mesh {
+  /* Dim the mesh in dark mode so foreground text never loses contrast. */
+  opacity: 0.55;
 }
 
 .scrollbar-thin::-webkit-scrollbar {

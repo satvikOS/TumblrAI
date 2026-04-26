@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, Sparkles, Wand2, BarChart3, Image as ImageIcon, MessagesSquare, Compass } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ThemeToggle } from "@/components/theme-provider";
 
 const features = [
   { icon: Sparkles, title: "Engagement prediction", body: "Score every draft against the trained Tumblr × Reddit model in real time." },
@@ -15,7 +16,7 @@ const features = [
 export default function Landing() {
   return (
     <div className="relative min-h-svh overflow-hidden">
-      <div className="absolute inset-0 -z-10 gradient-mesh opacity-40" />
+      <div className="pointer-events-none absolute inset-0 -z-10 gradient-mesh opacity-30 dark:opacity-50" />
 
       <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
         <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight">
@@ -27,17 +28,20 @@ export default function Landing() {
           <Link href="#science" className="hover:text-foreground">The model</Link>
           <Link href="/app" className="hover:text-foreground">Open app</Link>
         </nav>
-        <Button asChild size="sm">
-          <Link href="/app">Launch app <ArrowRight /></Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <Button asChild size="sm">
+            <Link href="/app">Launch app <ArrowRight /></Link>
+          </Button>
+        </div>
       </header>
 
       <main className="mx-auto max-w-6xl px-6">
         <section className="pt-16 pb-20 md:pt-24 md:pb-28">
           <Badge variant="outline" className="mb-6">Built on the CIS 434 published engagement model</Badge>
-          <h1 className="text-balance text-5xl font-semibold leading-[1.05] tracking-tight md:text-7xl">
+          <h1 className="text-balance text-5xl font-semibold leading-[1.05] tracking-tight text-foreground md:text-7xl">
             Know if a post will land
-            <span className="block bg-gradient-to-r from-primary to-fuchsia-500 bg-clip-text text-transparent">
+            <span className="block bg-gradient-to-r from-primary via-fuchsia-500 to-primary bg-clip-text text-transparent">
               before you publish it.
             </span>
           </h1>

@@ -15,6 +15,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { ThemeToggle } from "@/components/theme-provider";
 
 const NAV = [
   { href: "/app", label: "Dashboard", icon: LayoutDashboard },
@@ -66,7 +67,7 @@ export function AppShell({
             );
           })}
         </nav>
-        <div className="border-t border-border p-3">
+        <div className="space-y-2 border-t border-border p-3">
           <div className="flex items-center gap-3 rounded-md p-2">
             <Avatar>
               <AvatarFallback>{user.name.split(" ").map((s) => s[0]).join("").slice(0, 2)}</AvatarFallback>
@@ -75,7 +76,10 @@ export function AppShell({
               <div className="truncate text-sm font-medium">{user.name}</div>
               <div className="truncate text-xs text-muted-foreground">{user.email}</div>
             </div>
+          </div>
+          <div className="flex items-center justify-between px-2">
             <Badge variant="outline" className="capitalize">{user.tier}</Badge>
+            <ThemeToggle />
           </div>
         </div>
       </aside>
