@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build-and-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    env:
+      AZURE_OPENAI_ENDPOINT: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
+      AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
+      AZURE_OPENAI_API_VERSION: ${{ secrets.AZURE_OPENAI_API_VERSION }}
+      AZURE_DEPLOYMENT_PRIMARY: ${{ secrets.AZURE_DEPLOYMENT_PRIMARY }}
+      AZURE_DEPLOYMENT_PRO: ${{ secrets.AZURE_DEPLOYMENT_PRO }}
+      AZURE_DEPLOYMENT_REASONING: ${{ secrets.AZURE_DEPLOYMENT_REASONING }}
+      AZURE_DEPLOYMENT_EMBEDDING: ${{ secrets.AZURE_DEPLOYMENT_EMBEDDING }}
+      AZURE_DEPLOYMENT_IMAGE: ${{ secrets.AZURE_DEPLOYMENT_IMAGE }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Build
+        run: pnpm build
+
+      - name: Smoke-test endpoints
+        run: |
+          pnpm start &
+          SERVER_PID=$!
+          # Wait for server
+          for i in {1..30}; do
+            if curl -fsS http://localhost:3000/api/health > /dev/null; then
+              echo "server up"
+              break
+            fi
+            sleep 1
+          done
+          node ./scripts/smoke.mjs
+          kill $SERVER_PID || true
