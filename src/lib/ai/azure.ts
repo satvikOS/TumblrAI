@@ -4,7 +4,11 @@ import { createOpenAI } from "@ai-sdk/openai";
 // ─── Configuration ──────────────────────────────────────────────────────────
 const rawEndpoint = process.env.AZURE_OPENAI_ENDPOINT?.trim();
 const apiKey = process.env.AZURE_OPENAI_API_KEY?.trim();
-const apiVersion = process.env.AZURE_OPENAI_API_VERSION ?? "2024-12-01-preview";
+// Foundry-agent endpoints use newer preview versions than the classic
+// Azure OpenAI resource. Default lands on a value that works for both.
+// Override via AZURE_OPENAI_API_VERSION if your endpoint requires a
+// different one (e.g. "2025-04-01-preview", "preview", or a stable date).
+const apiVersion = process.env.AZURE_OPENAI_API_VERSION ?? "2025-04-01-preview";
 
 export const isAzureConfigured = Boolean(rawEndpoint && apiKey);
 
