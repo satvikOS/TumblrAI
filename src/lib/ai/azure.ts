@@ -69,6 +69,17 @@ export const adapterMode: AdapterMode = !isAzureConfigured
     ? "openai-v1"
     : "azure-deployment";
 
+// Azure's v1 OpenAI-compatible endpoint (both classic and Foundry agents)
+// requires an `api-version` query parameter on every request, which the
+// standard OpenAI client does not send. Wrap fetch to inject it.
+const v1Fetch: typeof fetch = (input, init) => {
+  const url = new URL(typeof input === "string" ? input : input instanceof URL ? input.href : input.url);
+  if (!url.searchParams.has("api-version")) {
+    url.searchParams.set("api-version", apiVersion);
+  }
+  return fetch(url.toString(), init);
+};
+
 const v1Client =
   adapterMode === "openai-v1" && endpointInfo
     ? createOpenAI({
@@ -81,6 +92,7 @@ const v1Client =
           "api-key": apiKey!,
           Authorization: `Bearer ${apiKey!}`,
         },
+        fetch: v1Fetch,
       })
     : null;
 
