@@ -6,7 +6,7 @@ import { NextResponse, type NextRequest } from "next/server";
 const SESSION_COOKIE = "nc_session";
 const DEFAULT_USER = "u_satvik";
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   if (!req.nextUrl.pathname.startsWith("/app")) {
     return NextResponse.next();
   }
