@@ -38,20 +38,24 @@ export function ChatClient() {
         body: JSON.stringify({ messages: next }),
       });
       if (!res.body) {
-        setMessages((p) => [...p, { role: "assistant", content: "(no response)" }]);
+        setMessages((p) => [
+          ...p,
+          { role: "assistant", content: "No response from server. Check /api/ai/ping." },
+        ]);
         return;
       }
       const reader = res.body.getReader();
       const dec = new TextDecoder();
-      let acc = "";
+      const accRef = { current: "" };
       setMessages((p) => [...p, { role: "assistant", content: "" }]);
       while (true) {
         const { value, done } = await reader.read();
         if (done) break;
-        acc += dec.decode(value, { stream: true });
+        accRef.current = accRef.current + dec.decode(value, { stream: true });
+        const snap = accRef.current;
         setMessages((p) => {
           const copy = p.slice();
-          copy[copy.length - 1] = { role: "assistant", content: acc };
+          copy[copy.length - 1] = { role: "assistant", content: snap };
           return copy;
         });
         scrollRef.current?.scrollTo({
@@ -59,6 +63,21 @@ export function ChatClient() {
           behavior: "smooth",
         });
       }
+      // If the stream ended with no content at all, surface that to the user.
+      if (!accRef.current.trim()) {
+        setMessages((p) => {
+          const copy = p.slice();
+          copy[copy.length - 1] = {
+            role: "assistant",
+            content:
+              "Empty response from the model. Open /api/ai/ping in a new tab to see the exact error.",
+          };
+          return copy;
+        });
+      }
+    } catch (err) {
+      const m = err instanceof Error ? err.message : String(err);
+      setMessages((p) => [...p, { role: "assistant", content: `Request failed: ${m}` }]);
     } finally {
       setBusy(false);
     }

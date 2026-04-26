@@ -95,6 +95,9 @@ export async function POST(req: NextRequest) {
     tools,
     maxSteps: 12,
     temperature: 0.4,
+    onError: ({ error }) => {
+      console.error("[agent] streamText error:", error);
+    },
     messages: [
       {
         role: "user",

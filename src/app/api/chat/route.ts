@@ -51,13 +51,24 @@ export async function POST(req: NextRequest) {
     return new Response(text, { headers: { "Content-Type": "text/plain" } });
   }
 
-  const result = streamText({
-    model,
-    system: SYSTEM,
-    tools,
-    maxSteps: 8,
-    messages: messages as Parameters<typeof streamText>[0]["messages"],
-  });
-
-  return result.toTextStreamResponse();
+  try {
+    const result = streamText({
+      model,
+      system: SYSTEM,
+      tools,
+      maxSteps: 8,
+      messages: messages as Parameters<typeof streamText>[0]["messages"],
+      onError: ({ error }) => {
+        console.error("[chat] streamText error:", error);
+      },
+    });
+    return result.toTextStreamResponse();
+  } catch (err) {
+    const e = err as Error;
+    console.error("[chat] startup error:", e);
+    return new Response(
+      `AI request failed: ${e.message}\n\nCheck /api/ai/ping for details.`,
+      { status: 200, headers: { "Content-Type": "text/plain" } },
+    );
+  }
 }

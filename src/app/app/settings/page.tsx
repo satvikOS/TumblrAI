@@ -9,6 +9,7 @@ import {
   deployments,
 } from "@/lib/ai/azure";
 import { SettingsClient } from "./settings-client";
+import { AiPing } from "@/components/ai-ping";
 
 export const metadata = { title: "Settings" };
 
@@ -104,6 +105,9 @@ export default async function SettingsPage() {
               embeddings are different model classes — set their dedicated
               deployment vars to enable those features.
             </p>
+            <div className="border-t border-border pt-3">
+              <AiPing />
+            </div>
           </CardContent>
         </Card>
 

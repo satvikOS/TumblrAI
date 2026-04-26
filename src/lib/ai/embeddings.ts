@@ -5,14 +5,19 @@ export async function embed(input: string | string[]): Promise<number[][]> {
     return Array.isArray(input) ? input.map(() => []) : [[]];
   }
   const inputs = Array.isArray(input) ? input : [input];
-  const url = `${azureRest.endpoint}/openai/deployments/${deployments.embedding}/embeddings?api-version=${azureRest.apiVersion}`;
+  const url = azureRest.isV1
+    ? `${azureRest.endpoint}/openai/v1/embeddings`
+    : `${azureRest.endpoint}/openai/deployments/${deployments.embedding}/embeddings?api-version=${azureRest.apiVersion}`;
+  const body: Record<string, unknown> = { input: inputs };
+  if (azureRest.isV1) body.model = deployments.embedding;
   const res = await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "api-key": azureRest.apiKey!,
+      Authorization: `Bearer ${azureRest.apiKey!}`,
     },
-    body: JSON.stringify({ input: inputs }),
+    body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error(`Embeddings failed: ${res.status}`);
   const data = (await res.json()) as {
