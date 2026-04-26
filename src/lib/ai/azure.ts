@@ -4,13 +4,17 @@ import { createOpenAI } from "@ai-sdk/openai";
 // ─── Configuration ──────────────────────────────────────────────────────────
 const rawEndpoint = process.env.AZURE_OPENAI_ENDPOINT?.trim();
 const apiKey = process.env.AZURE_OPENAI_API_KEY?.trim();
-// Foundry agent endpoints whose URL path ends in /openai/v1 expect a
-// literal version string ("preview" or "v1"), NOT a date. Classic Azure
-// OpenAI deployment endpoints expect a date like 2024-12-01-preview.
-// Default to "preview" because it works on both Foundry agents and the
-// classic v1 endpoint. Override via AZURE_OPENAI_API_VERSION when your
-// portal shows a different value.
-const apiVersion = process.env.AZURE_OPENAI_API_VERSION ?? "preview";
+// Different endpoint shapes accept different api-version values:
+//   - Foundry agents + classic /openai/v1   → literal "preview" or "v1"
+//   - Classic deployment-based              → a date like "2024-10-21"
+// Pick the right default based on the endpoint shape we detected, but
+// still honor an explicit AZURE_OPENAI_API_VERSION override when set.
+function defaultApiVersion(): string {
+  if (!rawEndpoint) return "preview";
+  const isV1Path = /\/openai\/v1$/.test(rawEndpoint.replace(/\/+$/, ""));
+  return isV1Path ? "preview" : "2024-10-21";
+}
+const apiVersion = process.env.AZURE_OPENAI_API_VERSION ?? defaultApiVersion();
 
 export const isAzureConfigured = Boolean(rawEndpoint && apiKey);
 
