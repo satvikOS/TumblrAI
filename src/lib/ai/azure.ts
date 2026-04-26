@@ -69,12 +69,16 @@ const endpointInfo = (() => {
   if (!rawEndpoint) return null;
   const trimmed = rawEndpoint.replace(/\/+$/, "");
   // Endpoint shapes Azure surfaces today:
-  //   1. https://{resource}.openai.azure.com                       (deployment-based)
-  //   2. https://{resource}.openai.azure.com/openai                (deployment-based, redundant)
-  //   3. https://{resource}.openai.azure.com/openai/v1             (OpenAI-compatible v1)
-  //   4. https://{resource}.services.ai.azure.com/...              (Foundry agents — not supported here)
+  //   1. https://{resource}.openai.azure.com                       → deployment-based
+  //   2. https://{resource}.openai.azure.com/openai                → deployment-based
+  //   3. https://{resource}.openai.azure.com/openai/v1             → classic v1, api-version REQUIRED
+  //   4. .../agents/{name}/protocols/openai/v1                     → Foundry agent, api-version REQUIRED
+  //   5. .../api/projects/{name}/openai/v1                         → Foundry project, api-version FORBIDDEN
   const isV1 = /\/openai\/v1$/.test(trimmed);
   const isDeploymentBase = /\/openai$/.test(trimmed);
+  // Foundry project endpoints (case 5) reject the api-version query param.
+  // They're identified by /api/projects/{slug}/openai/v1 with no /agents/.
+  const isFoundryProjectV1 = /\/api\/projects\/[^/]+\/openai\/v1$/.test(trimmed);
   const baseRoot = trimmed
     .replace(/\/openai\/v1$/, "")
     .replace(/\/openai$/, "");
@@ -84,7 +88,7 @@ const endpointInfo = (() => {
   } catch {
     resourceName = undefined;
   }
-  return { trimmed, baseRoot, isV1, isDeploymentBase, resourceName };
+  return { trimmed, baseRoot, isV1, isDeploymentBase, isFoundryProjectV1, resourceName };
 })();
 
 // ─── Deployment routing ────────────────────────────────────────────────────
@@ -123,12 +127,15 @@ export const adapterMode: AdapterMode = !isAzureConfigured
     ? "openai-v1"
     : "azure-deployment";
 
-// Azure's v1 OpenAI-compatible endpoint (both classic and Foundry agents)
-// requires an `api-version` query parameter on every request, which the
-// standard OpenAI client does not send. Wrap fetch to inject it.
+// Azure's v1 OpenAI-compatible endpoint requires an `api-version` query
+// param on every request — UNLESS it's a Foundry project endpoint
+// (.../api/projects/{name}/openai/v1) which actively rejects it.
+const skipApiVersion = endpointInfo?.isFoundryProjectV1 ?? false;
 const v1Fetch: typeof fetch = (input, init) => {
   const url = new URL(typeof input === "string" ? input : input instanceof URL ? input.href : input.url);
-  if (!url.searchParams.has("api-version")) {
+  if (skipApiVersion) {
+    url.searchParams.delete("api-version");
+  } else if (!url.searchParams.has("api-version")) {
     url.searchParams.set("api-version", apiVersion);
   }
   return fetch(url.toString(), init);
