@@ -1,7 +1,8 @@
 "use client";
 import { useState } from "react";
 import Image from "next/image";
-import { BadgeCheck, MapPin, Link as LinkIcon, Calendar, UserPlus, UserCheck, Loader2 } from "lucide-react";
+import { BadgeCheck, MapPin, Link as LinkIcon, Calendar, UserPlus, UserCheck } from "lucide-react";
+import { LogoSpinner } from "@/components/logo-3d";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -83,7 +84,7 @@ export function ProfileClient({
           <div className="flex gap-2 pb-2">
             {!isMe ? (
               <Button onClick={toggle} disabled={busy} variant={following ? "outline" : "default"}>
-                {busy ? <Loader2 className="animate-spin" /> : following ? <UserCheck /> : <UserPlus />}
+                {busy ? <LogoSpinner size={14} /> : following ? <UserCheck /> : <UserPlus />}
                 {following ? "Following" : "Follow"}
               </Button>
             ) : (

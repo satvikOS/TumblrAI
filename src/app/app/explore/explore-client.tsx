@@ -1,11 +1,12 @@
 "use client";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Compass, Loader2 } from "lucide-react";
+import { Compass } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { PostCard, type FeedPost } from "@/components/social/post-card";
 import { PlatformToggle } from "@/components/platform-toggle";
 import { Card, CardContent } from "@/components/ui/card";
+import { LogoLoader } from "@/components/logo-3d";
 import { trendingTopics } from "@/lib/trends";
 import { cn } from "@/lib/utils";
 
@@ -80,9 +81,7 @@ export function ExploreClient({
         </Card>
 
         {loading ? (
-          <div className="grid place-items-center py-16">
-            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-          </div>
+          <LogoLoader label="finding the best posts" size={56} />
         ) : (
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <AnimatePresence initial={false}>

@@ -1,8 +1,9 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2 } from "lucide-react";
 import { PostCard, type FeedPost } from "@/components/social/post-card";
+import { SkeletonPostCard } from "@/components/ui/skeleton";
+import { LogoSpinner } from "@/components/logo-3d";
 
 export function FeedClient({
   initialItems,
@@ -108,11 +109,21 @@ export function FeedClient({
         ))}
       </AnimatePresence>
 
+      {loading && items.length === 0 && (
+        <div className="space-y-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <SkeletonPostCard key={i} />
+          ))}
+        </div>
+      )}
+
       <div ref={sentinel} className="grid place-items-center py-6">
         {cursor == null ? (
-          <span className="text-xs text-muted-foreground">— end of feed —</span>
+          <span className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+            — end of feed —
+          </span>
         ) : loading ? (
-          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+          <LogoSpinner size={20} />
         ) : null}
       </div>
     </div>

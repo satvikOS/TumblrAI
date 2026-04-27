@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
-import { Loader2, Plug, CheckCircle2, AlertCircle } from "lucide-react";
+import { Plug, CheckCircle2, AlertCircle } from "lucide-react";
+import { LogoSpinner } from "@/components/logo-3d";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -58,7 +59,7 @@ export function AiPing() {
       <div className="flex items-center justify-between">
         <div className="text-sm font-medium">Live model test</div>
         <Button size="sm" variant="outline" onClick={run} disabled={busy}>
-          {busy ? <Loader2 className="animate-spin" /> : <Plug />}
+          {busy ? <LogoSpinner size={14} /> : <Plug />}
           Test connection
         </Button>
       </div>

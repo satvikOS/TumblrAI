@@ -11,7 +11,6 @@ import {
   MessagesSquare,
   ImageIcon,
   Settings,
-  Search,
   Bell,
   User as UserIcon,
 } from "lucide-react";
@@ -20,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/theme-provider";
 import { Logo3D } from "@/components/logo-3d";
 import { UserAvatar } from "@/components/social/avatar";
+import { SearchBar } from "@/components/social/search-bar";
 
 const PRIMARY = [
   { href: "/app", label: "Home", icon: Home, exact: true },
@@ -156,15 +156,3 @@ function NavGroup({
   );
 }
 
-function SearchBar() {
-  return (
-    <div className="relative w-full max-w-md">
-      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-      <input
-        type="search"
-        placeholder="Search posts, tags, people…"
-        className="h-9 w-full rounded-md border border-border bg-card pl-9 pr-3 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-      />
-    </div>
-  );
-}

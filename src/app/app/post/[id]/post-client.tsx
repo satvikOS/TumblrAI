@@ -3,8 +3,9 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
-  ArrowLeft, Heart, Repeat2, MessageCircle, Sparkles, Send, BadgeCheck, Loader2,
+  ArrowLeft, Heart, Repeat2, MessageCircle, Sparkles, Send, BadgeCheck,
 } from "lucide-react";
+import { LogoSpinner } from "@/components/logo-3d";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -202,7 +203,7 @@ export function PostDetailClient({
             />
             <div className="mt-2 flex justify-end">
               <Button size="sm" disabled={!draft.trim() || posting}>
-                {posting ? <Loader2 className="animate-spin" /> : <Send />}
+                {posting ? <LogoSpinner size={14} /> : <Send />}
                 Comment
               </Button>
             </div>
