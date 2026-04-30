@@ -14,7 +14,7 @@ export function EngagementGauge({
   const r = size / 2 - 14;
   const c = 2 * Math.PI * r;
   const dash = c * Math.max(0, Math.min(1, prob));
-  const color = prob >= 0.7 ? "var(--color-success)" : prob >= 0.5 ? "var(--color-warn)" : "var(--color-danger)";
+  const color = prob >= 0.7 ? "var(--success)" : prob >= 0.5 ? "var(--warn)" : "var(--danger)";
   return (
     <div className="relative" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">

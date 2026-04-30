@@ -6,6 +6,11 @@ import { trendingTags, trendingTopics } from "@/lib/trends";
 import type { Platform } from "@/lib/ml/topics";
 import { generateImage } from "./image";
 
+// gpt-5-nano (and other newer OpenAI models) enforce STRICT schemas: every
+// property in `properties` must also appear in `required`. Use .nullable()
+// for optional inputs so the property is required-but-allowed-to-be-null,
+// and .default() so the model is told what value to send when it doesn't
+// have a strong opinion.
 const PlatformZ = z.enum(["tumblr", "reddit"]);
 
 export const tools = {
@@ -14,19 +19,22 @@ export const tools = {
       "Predict probability that a post achieves high engagement. Returns prob (0-1), label (high/low), all features, and ranked drivers explaining the score.",
     parameters: z.object({
       text: z.string().min(1).describe("The post body."),
-      tags: z.array(z.string()).optional().describe("Tags / hashtags."),
+      tags: z
+        .array(z.string())
+        .nullable()
+        .describe("Tags / hashtags. Pass null when not relevant."),
       platform: PlatformZ.describe("tumblr or reddit"),
       imageDescription: z
         .string()
-        .optional()
-        .describe("Short description of any attached image."),
+        .nullable()
+        .describe("Short description of any attached image. Pass null if none."),
     }),
     execute: async ({ text, tags, platform, imageDescription }) => {
       const r = predict({
         text,
         tags: tags ?? [],
         platform: platform as Platform,
-        imageDescription,
+        imageDescription: imageDescription ?? undefined,
       });
       return {
         probHigh: Number(r.probHigh.toFixed(3)),
@@ -52,7 +60,7 @@ export const tools = {
     parameters: z.object({
       query: z.string().min(1),
       platform: PlatformZ,
-      k: z.number().int().min(1).max(10).default(5),
+      k: z.number().int().min(1).max(10).describe("How many results to return (1-10)."),
     }),
     execute: async ({ query, platform, k }) => {
       const items: LibraryPost[] = findSimilar(query, platform as Platform, k);
@@ -72,7 +80,7 @@ export const tools = {
     parameters: z.object({
       text: z.string().min(1),
       platform: PlatformZ,
-      max: z.number().int().min(1).max(20).default(10),
+      max: z.number().int().min(1).max(20).describe("Max number of tags to return (1-20)."),
     }),
     execute: async ({ text, platform, max }) => {
       const trending = trendingTags(platform as Platform);
@@ -107,12 +115,9 @@ export const tools = {
         "add_hook",
         "add_question",
       ]),
-      target_topic: z.string().optional(),
+      target_topic: z.string().nullable().describe("Optional target topic; pass null when not relevant."),
       platform: PlatformZ,
     }),
-    // The rewrite is *itself* an LLM call — we return a placeholder; the
-    // calling agent loop will produce the real rewrite on the next turn
-    // using its own model context. This tool is a structured intent marker.
     execute: async ({ text, strategy, target_topic, platform }) => {
       return {
         accepted: true,
@@ -139,7 +144,7 @@ export const tools = {
     parameters: z.object({
       before: z.string(),
       after: z.string(),
-      tags: z.array(z.string()).optional(),
+      tags: z.array(z.string()).nullable().describe("Tags shared by both versions; pass null if none."),
       platform: PlatformZ,
     }),
     execute: async ({ before, after, tags, platform }) => {
@@ -158,9 +163,7 @@ export const tools = {
       "Generate a hero image for a post via Azure gpt-image-1. Returns a base64 PNG.",
     parameters: z.object({
       prompt: z.string().min(3),
-      style: z
-        .enum(["photoreal", "film", "illustration", "minimal"])
-        .default("photoreal"),
+      style: z.enum(["photoreal", "film", "illustration", "minimal"]),
     }),
     execute: async ({ prompt, style }) => {
       const styleHint = {

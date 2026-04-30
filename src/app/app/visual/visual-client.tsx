@@ -1,7 +1,8 @@
 "use client";
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { ImagePlus, Wand2, Loader2, Download } from "lucide-react";
+import { ImagePlus, Wand2, Download } from "lucide-react";
+import { LogoSpinner } from "@/components/logo-3d";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -113,7 +114,7 @@ function AnalyzePanel() {
             className="min-h-[100px]"
           />
           <Button onClick={analyze} disabled={busy} className="w-full">
-            {busy ? <Loader2 className="animate-spin" /> : <Wand2 />}
+            {busy ? <LogoSpinner size={14} /> : <Wand2 />}
             Analyze
           </Button>
         </CardContent>
@@ -216,7 +217,7 @@ function GeneratePanel() {
             </Select>
           </div>
           <Button onClick={generate} disabled={busy} className="w-full">
-            {busy ? <Loader2 className="animate-spin" /> : <Wand2 />}
+            {busy ? <LogoSpinner size={14} /> : <Wand2 />}
             Generate
           </Button>
           <p className="text-[11px] text-muted-foreground">

@@ -1,216 +1,141 @@
 import Link from "next/link";
-import { ArrowRight, PenSquare, Sparkles, TrendingUp, Image as ImageIcon } from "lucide-react";
-import { PageHeader } from "@/components/page-header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { drafts } from "@/lib/store";
+import { Sparkles, TrendingUp } from "lucide-react";
 import { getSession } from "@/lib/auth";
-import { engagementSeries, trendingTopics } from "@/lib/trends";
+import { Posts, Users } from "@/lib/social/store";
+import { trendingTags, trendingTopics } from "@/lib/trends";
+import { FeedClient } from "./feed-client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { UserAvatar } from "@/components/social/avatar";
 import { formatNumber, formatPct, relativeTime } from "@/lib/utils";
-import { TrendSparkline } from "@/components/trend-sparkline";
 
-export default async function Dashboard() {
+export default async function FeedPage() {
   const user = (await getSession())!;
-  const myDrafts = drafts.list(user.id);
-  const series = engagementSeries("tumblr");
+
+  // Server-render the first page so the feed shows instantly.
+  const initial = Posts.feed(user.id, { cursor: 0, limit: 8 });
+  const items = initial.items.map((p) => {
+    const a = Users.byHandle(p.authorHandle);
+    return {
+      ...p,
+      author: a
+        ? { handle: a.handle, name: a.name, avatarSeed: a.avatarSeed, verified: a.verified }
+        : null,
+      liked: false,
+      reblogged: false,
+    };
+  });
+
+  const tags = trendingTags("tumblr").slice(0, 6);
   const topics = trendingTopics("tumblr");
-
-  const published = myDrafts.filter((d) => d.state === "published");
-  const avgProb =
-    myDrafts.length > 0
-      ? myDrafts.reduce((s, d) => s + (d.predictedProb ?? 0), 0) / myDrafts.length
-      : 0;
+  const suggested = Users.all()
+    .filter((u) => u.handle !== user.handle && (u.verified || u.followers > 10_000))
+    .slice(0, 5);
 
   return (
-    <div>
-      <PageHeader
-        title={`Welcome back, ${user.name.split(" ")[0]}.`}
-        description="Your engagement intelligence at a glance."
-        actions={
-          <>
-            <Button variant="outline" asChild>
-              <Link href="/app/trends">Trends <ArrowRight /></Link>
-            </Button>
-            <Button asChild>
-              <Link href="/app/compose"><PenSquare /> New post</Link>
-            </Button>
-          </>
-        }
-      />
-
-      <div className="grid grid-cols-1 gap-6 p-8 lg:grid-cols-3">
-        <Stat
-          label="Drafts"
-          value={String(myDrafts.length)}
-          sub={`${published.length} published`}
-          icon={<PenSquare className="h-4 w-4" />}
-        />
-        <Stat
-          label="Avg predicted reach"
-          value={formatPct(avgProb)}
-          sub="across saved drafts"
-          icon={<Sparkles className="h-4 w-4" />}
-        />
-        <Stat
-          label="Top trending topic"
-          value={topics[0]?.topic ?? "—"}
-          sub={`${formatPct(topics[0]?.share ?? 0)} of feed`}
-          icon={<TrendingUp className="h-4 w-4" />}
-        />
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
+      {/* Main feed */}
+      <div className="px-4 py-4 sm:px-6">
+        <header className="mb-4 flex items-end justify-between">
+          <div>
+            <h1 className="font-display text-3xl font-semibold tracking-tight">Your feed</h1>
+            <p className="text-sm text-muted-foreground">
+              Posts from {Users.all().length - 1} creators you follow, ranked newest first.
+            </p>
+          </div>
+        </header>
+        <FeedClient initialItems={items} initialCursor={initial.nextCursor} />
       </div>
 
-      <div className="grid grid-cols-1 gap-6 px-8 pb-8 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader className="flex-row items-center justify-between">
-            <CardTitle>Tumblr engagement · last 14 days</CardTitle>
-            <Badge variant="outline">avg {formatNumber(series.reduce((s, d) => s + d.value, 0) / series.length)}</Badge>
-          </CardHeader>
-          <CardContent>
-            <TrendSparkline data={series} />
-          </CardContent>
-        </Card>
+      {/* Sidebar widgets */}
+      <aside className="hidden border-l border-border-soft px-5 py-4 lg:block">
+        <div className="sticky top-4 space-y-5">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <TrendingUp className="h-3.5 w-3.5 text-primary" />
+                Trending tags
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-1.5">
+              {tags.map((t) => (
+                <Link
+                  key={t.tag}
+                  href={`/app/explore?topic=${encodeURIComponent(t.tag)}`}
+                  className="flex items-center justify-between rounded-md px-2 py-1.5 text-sm transition hover:bg-muted"
+                >
+                  <span className="truncate">#{t.tag}</span>
+                  <span className="text-xs tabular-nums text-muted-foreground">
+                    {formatNumber(t.posts)}
+                  </span>
+                </Link>
+              ))}
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Topic mix</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {topics.map((t) => (
-              <div key={t.topic}>
-                <div className="mb-1 flex items-center justify-between text-sm">
-                  <span>{t.topic}</span>
-                  <span className="tabular-nums text-muted-foreground">{formatPct(t.share)}</span>
-                </div>
-                <Progress value={t.share * 100} />
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 gap-6 px-8 pb-12 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader className="flex-row items-center justify-between">
-            <CardTitle>Recent drafts</CardTitle>
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/app/calendar">View all <ArrowRight /></Link>
-            </Button>
-          </CardHeader>
-          <CardContent className="divide-y divide-border">
-            {myDrafts.slice(0, 6).map((d) => (
-              <Link
-                key={d.id}
-                href={`/app/compose?id=${d.id}`}
-                className="flex items-start gap-4 py-3 transition-colors hover:bg-muted/30"
-              >
-                <Badge variant={d.platform === "tumblr" ? "default" : "secondary"} className="mt-0.5 capitalize">
-                  {d.platform}
-                </Badge>
-                <div className="min-w-0 flex-1">
-                  <div className="line-clamp-1 font-medium">{d.title ?? d.text.slice(0, 80)}</div>
-                  <div className="line-clamp-1 text-xs text-muted-foreground">
-                    {relativeTime(d.createdAt)} · {d.tags.length} tags · {d.state}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">Topic mix</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {topics.map((t) => (
+                <div key={t.topic}>
+                  <div className="mb-1 flex items-center justify-between text-xs">
+                    <span>{t.topic}</span>
+                    <span className="tabular-nums text-muted-foreground">{formatPct(t.share)}</span>
                   </div>
+                  <Progress value={t.share * 100} />
                 </div>
-                <div className="text-right">
-                  <div className="text-sm font-semibold tabular-nums">
-                    {d.predictedProb ? formatPct(d.predictedProb) : "—"}
-                  </div>
-                  <div className="text-[10px] uppercase text-muted-foreground">predicted</div>
-                </div>
-              </Link>
-            ))}
-            {myDrafts.length === 0 && (
-              <div className="py-12 text-center text-sm text-muted-foreground">
-                No drafts yet — start in the composer.
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              ))}
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Quick actions</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <QuickAction
-              href="/app/compose"
-              icon={<PenSquare className="h-4 w-4" />}
-              title="New draft"
-              sub="Write with live engagement scoring"
-            />
-            <QuickAction
-              href="/app/visual"
-              icon={<ImageIcon className="h-4 w-4" />}
-              title="Visual lab"
-              sub="Analyze a photo or generate a hero image"
-            />
-            <QuickAction
-              href="/app/chat"
-              icon={<Sparkles className="h-4 w-4" />}
-              title="Ask the assistant"
-              sub="Trends, ideas, rewrites — on demand"
-            />
-          </CardContent>
-        </Card>
-      </div>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">Suggested for you</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {suggested.map((u) => (
+                <Link
+                  key={u.handle}
+                  href={`/app/${u.handle}`}
+                  className="flex items-center gap-3 rounded-md px-1 py-1 transition hover:bg-muted"
+                >
+                  <UserAvatar seed={u.avatarSeed} size={32} />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1 truncate text-sm font-medium">
+                      {u.name}
+                    </div>
+                    <div className="truncate text-xs text-muted-foreground">
+                      {formatNumber(u.followers)} followers
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="space-y-2 p-4">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Sparkles className="h-3 w-3 text-primary" />
+                Tip
+              </div>
+              <p className="text-sm leading-snug">
+                Drafts are scored as you type. Hit{" "}
+                <Link href="/app/compose" className="text-primary underline-offset-2 hover:underline">
+                  Composer
+                </Link>{" "}
+                to try the agent on a fresh post.
+              </p>
+            </CardContent>
+          </Card>
+
+          <div className="pt-2 text-[11px] text-muted-foreground">
+            Joined {relativeTime(user.id)} · v0.2 · <Link href="/api/health" className="hover:underline">api</Link>
+          </div>
+        </div>
+      </aside>
     </div>
-  );
-}
-
-function Stat({
-  label,
-  value,
-  sub,
-  icon,
-}: {
-  label: string;
-  value: string;
-  sub: string;
-  icon: React.ReactNode;
-}) {
-  return (
-    <Card>
-      <CardContent className="flex items-start justify-between p-5">
-        <div>
-          <div className="text-xs uppercase tracking-wider text-muted-foreground">{label}</div>
-          <div className="mt-1 text-3xl font-semibold tabular-nums">{value}</div>
-          <div className="mt-1 text-xs text-muted-foreground">{sub}</div>
-        </div>
-        <div className="grid h-8 w-8 place-items-center rounded-md bg-primary/10 text-primary">
-          {icon}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function QuickAction({
-  href,
-  icon,
-  title,
-  sub,
-}: {
-  href: string;
-  icon: React.ReactNode;
-  title: string;
-  sub: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className="group flex items-center gap-3 rounded-md border border-border bg-muted/30 p-3 transition-all hover:border-primary/40 hover:bg-muted/50"
-    >
-      <div className="grid h-8 w-8 place-items-center rounded-md bg-background text-foreground">
-        {icon}
-      </div>
-      <div className="min-w-0 flex-1">
-        <div className="text-sm font-medium">{title}</div>
-        <div className="truncate text-xs text-muted-foreground">{sub}</div>
-      </div>
-      <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
-    </Link>
   );
 }

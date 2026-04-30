@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { generateImage } from "@/lib/ai/image";
-import { isAzureConfigured } from "@/lib/ai/azure";
+import { isAzureConfigured, isImageConfigured } from "@/lib/ai/azure";
 
 const Body = z.object({
   prompt: z.string().min(3),
@@ -21,6 +21,14 @@ export async function POST(req: NextRequest) {
       mock: true,
       images: [],
       message: "Azure not configured. Set AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY.",
+    });
+  }
+  if (!isImageConfigured) {
+    return NextResponse.json({
+      mock: true,
+      images: [],
+      message:
+        "Image generation needs a separate model deployment. Set AZURE_DEPLOYMENT_IMAGE to your gpt-image-1 (or DALL-E) deployment name.",
     });
   }
 

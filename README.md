@@ -63,15 +63,25 @@ response so the UI is fully usable.
 Set in Vercel project settings (or GitHub Actions secrets for CI):
 
 ```
+# Required
 AZURE_OPENAI_ENDPOINT       https://your-resource.openai.azure.com
 AZURE_OPENAI_API_KEY        <key>
-AZURE_OPENAI_API_VERSION    2024-12-01-preview   # optional
-AZURE_DEPLOYMENT_PRIMARY    gpt-5-mini           # optional
-AZURE_DEPLOYMENT_PRO        gpt-5                # optional
-AZURE_DEPLOYMENT_REASONING  o4-mini              # optional
-AZURE_DEPLOYMENT_EMBEDDING  text-embedding-3-large
-AZURE_DEPLOYMENT_IMAGE      gpt-image-1
+AZURE_DEPLOYMENT_PRIMARY    gpt-5-nano            # your Azure deployment NAME
+
+# Optional — leave unset and they route to PRIMARY automatically
+AZURE_DEPLOYMENT_PRO        gpt-5
+AZURE_DEPLOYMENT_REASONING  o4-mini
+AZURE_OPENAI_API_VERSION    2024-12-01-preview
+
+# Optional — different model classes; leave unset to disable that feature
+AZURE_DEPLOYMENT_IMAGE      gpt-image-1            # enables image generation
+AZURE_DEPLOYMENT_EMBEDDING  text-embedding-3-large # enables embedding search
 ```
+
+**A single gpt-5-nano deployment is a valid full setup** for everything
+except image generation and embeddings (those need their own model classes).
+When the optional deployments are unset, the corresponding endpoints return
+clearly-labeled preview responses instead of failing.
 
 ## CI
 

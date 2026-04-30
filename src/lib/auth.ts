@@ -3,6 +3,7 @@ import { nanoid } from "nanoid";
 
 export type SessionUser = {
   id: string;
+  handle: string;
   email: string;
   name: string;
   avatarSeed: string;
@@ -14,6 +15,7 @@ const COOKIE = "nc_session";
 const MOCK_USERS: SessionUser[] = [
   {
     id: "u_satvik",
+    handle: "satvik",
     email: "satvik@notecount.ai",
     name: "Satvik Adyanthaya",
     avatarSeed: "satvik",
@@ -21,6 +23,7 @@ const MOCK_USERS: SessionUser[] = [
   },
   {
     id: "u_demo",
+    handle: "demo",
     email: "demo@notecount.ai",
     name: "Demo Creator",
     avatarSeed: "demo",

@@ -1,4 +1,4 @@
-import { azureRest, deployments, isAzureConfigured } from "./azure";
+import { azureRest, deployments, isAzureConfigured, isImageConfigured } from "./azure";
 
 export type ImageGenInput = {
   prompt: string;
@@ -12,25 +12,35 @@ export type ImageGenOutput = {
 };
 
 export async function generateImage(input: ImageGenInput): Promise<ImageGenOutput> {
-  if (!isAzureConfigured || !azureRest.endpoint) {
+  if (!isAzureConfigured || !isImageConfigured || !azureRest.endpoint) {
     return { images: [] };
   }
 
-  const url = `${azureRest.endpoint}/openai/deployments/${deployments.image}/images/generations?api-version=${azureRest.apiVersion}`;
+  // OpenAI-compatible v1 path:
+  //   POST {endpoint}/openai/v1/images/generations  body.model = deployment
+  // Deployment-based Azure path:
+  //   POST {endpoint}/openai/deployments/{deployment}/images/generations?api-version=...
+  const url = azureRest.isV1
+    ? `${azureRest.endpoint}/openai/v1/images/generations`
+    : `${azureRest.endpoint}/openai/deployments/${deployments.image}/images/generations?api-version=${azureRest.apiVersion}`;
+
+  const body: Record<string, unknown> = {
+    prompt: input.prompt,
+    size: input.size ?? "1024x1024",
+    quality: input.quality ?? "medium",
+    n: input.n ?? 1,
+    output_format: "png",
+  };
+  if (azureRest.isV1) body.model = deployments.image;
 
   const res = await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "api-key": azureRest.apiKey!,
+      Authorization: `Bearer ${azureRest.apiKey!}`,
     },
-    body: JSON.stringify({
-      prompt: input.prompt,
-      size: input.size ?? "1024x1024",
-      quality: input.quality ?? "medium",
-      n: input.n ?? 1,
-      output_format: "png",
-    }),
+    body: JSON.stringify(body),
   });
 
   if (!res.ok) {

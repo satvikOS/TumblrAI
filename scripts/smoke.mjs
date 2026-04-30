@@ -122,6 +122,45 @@ const tests = [
       assert(j.prediction?.probHigh != null, "analyze url prediction");
     },
   },
+  {
+    name: "GET /api/feed (social)",
+    run: async () => {
+      const r = await fetch(`${BASE}/api/feed?limit=5`);
+      assertOk(r);
+      const j = await r.json();
+      assert(Array.isArray(j.items), "feed items array");
+    },
+  },
+  {
+    name: "GET /api/explore (social)",
+    run: async () => {
+      const r = await fetch(`${BASE}/api/explore?platform=tumblr&limit=4`);
+      assertOk(r);
+      const j = await r.json();
+      assert(Array.isArray(j.items), "explore items array");
+      assert(j.items.length > 0, "explore has items");
+    },
+  },
+  {
+    name: "GET /api/social/users/satvik",
+    run: async () => {
+      const r = await fetch(`${BASE}/api/social/users/satvik`);
+      assertOk(r);
+      const j = await r.json();
+      assert(j.user?.handle === "satvik", "user payload");
+      assert(Array.isArray(j.posts), "user posts");
+    },
+  },
+  {
+    name: "GET /api/social/search?q=fog",
+    run: async () => {
+      const r = await fetch(`${BASE}/api/social/search?q=fog`);
+      assertOk(r);
+      const j = await r.json();
+      assert(Array.isArray(j.posts), "search posts");
+      assert(Array.isArray(j.users), "search users");
+    },
+  },
 ];
 
 let failed = 0;
