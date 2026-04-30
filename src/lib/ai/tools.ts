@@ -5,6 +5,8 @@ import { findSimilar, type LibraryPost } from "@/lib/library";
 import { trendingTags, trendingTopics } from "@/lib/trends";
 import type { Platform } from "@/lib/ml/topics";
 import { generateImage } from "./image";
+import { findContentGaps, postingHeatmap, viralRisk, translatePost, rankVariants } from "@/lib/ml/insights";
+import { hookAnalysis } from "@/lib/ml/text-features";
 
 // gpt-5-nano (and other newer OpenAI models) enforce STRICT schemas: every
 // property in `properties` must also appear in `required`. Use .nullable()
@@ -182,6 +184,100 @@ export const tools = {
         count: out.images.length,
         b64: out.images[0]?.b64 ?? null,
       };
+    },
+  }),
+
+  content_gaps: tool({
+    description:
+      "Find content gaps — trending topics the user hasn't covered yet. Returns up to 4 opportunities ranked by upside.",
+    parameters: z.object({
+      platform: PlatformZ,
+      my_drafts: z.array(z.object({ text: z.string(), tags: z.array(z.string()), state: z.string() }))
+        .nullable()
+        .describe("User's existing drafts to measure coverage against. Pass null if unknown."),
+    }),
+    execute: async ({ platform, my_drafts }) => {
+      const docs = (my_drafts ?? []).map((d) => ({ ...d, platform: platform as Platform }));
+      return findContentGaps(docs, platform as Platform).slice(0, 4);
+    },
+  }),
+
+  posting_heatmap: tool({
+    description:
+      "Return the best day and hour to post for the given platform and topic. Also returns a 7×24 score grid.",
+    parameters: z.object({
+      platform: PlatformZ,
+      topic: z.string().nullable().describe("Primary topic (e.g. Q&A, Natural Scenery). Pass null to use platform defaults."),
+    }),
+    execute: async ({ platform, topic }) => {
+      const h = postingHeatmap(platform as Platform, topic ?? undefined);
+      return { best: h.best, platform: h.platform };
+    },
+  }),
+
+  viral_risk: tool({
+    description:
+      "Assess viral potential and draft consistency (0..1 each). Returns a plain-language callout.",
+    parameters: z.object({
+      text: z.string().min(1),
+      tags: z.array(z.string()).nullable().describe("Tags. Pass null if none."),
+      platform: PlatformZ,
+    }),
+    execute: async ({ text, tags, platform }) => {
+      const r = predict({ text, tags: tags ?? [], platform: platform as Platform });
+      return viralRisk(r);
+    },
+  }),
+
+  translate_post: tool({
+    description:
+      "Cross-platform translation: adapt a Tumblr post for Reddit or vice versa. Returns the translated text plus predicted engagement for both versions.",
+    parameters: z.object({
+      text: z.string().min(1),
+      from: PlatformZ,
+      to: PlatformZ,
+      tags: z.array(z.string()).nullable().describe("Tags. Pass null if none."),
+    }),
+    execute: async ({ text, from, to, tags }) => {
+      const translated = translatePost(text, from as Platform, to as Platform);
+      const src = predict({ text, tags: tags ?? [], platform: from as Platform });
+      const tgt = predict({ text: translated, tags: tags ?? [], platform: to as Platform });
+      return {
+        translated,
+        source: { prob: Number(src.probHigh.toFixed(3)), scores: src.scores },
+        target: { prob: Number(tgt.probHigh.toFixed(3)), scores: tgt.scores },
+      };
+    },
+  }),
+
+  analyze_hook: tool({
+    description:
+      "Score the opening line of a post on hook strength (0..1) and list specific improvement reasons.",
+    parameters: z.object({
+      text: z.string().min(1).describe("Full post body — first sentence is extracted automatically."),
+    }),
+    execute: async ({ text }) => {
+      const h = hookAnalysis(text);
+      return { openingLine: h.text, score: Number(h.score.toFixed(2)), reasons: h.reasons };
+    },
+  }),
+
+  rank_variants: tool({
+    description:
+      "Rank multiple rewrites of a post by predicted engagement. Returns ordered list with reasoning.",
+    parameters: z.object({
+      variants: z.array(z.string()).min(2).max(6).describe("2–6 text variants to compare."),
+      platform: PlatformZ,
+      tags: z.array(z.string()).nullable().describe("Shared tags. Pass null if none."),
+    }),
+    execute: async ({ variants, platform, tags }) => {
+      return rankVariants(variants, platform as Platform, tags ?? []).map((v) => ({
+        rank: v.rank,
+        preview: v.variant.slice(0, 200),
+        prob: Number(v.prediction.probHigh.toFixed(3)),
+        scores: v.prediction.scores,
+        reasonToPick: v.reasonToPick,
+      }));
     },
   }),
 };
